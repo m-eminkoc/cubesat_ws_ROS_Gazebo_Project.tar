@@ -2,17 +2,25 @@
 
 Bu rehber, projeyi başka bir bilgisayarda çalıştırmak içindir.
 
-## 1. Gereksinimler
+## 1. ROS 2 Jazzy ve ek paketlerin kurulumu
 
-- **Ubuntu 24.04**, **ROS 2 Jazzy** ve **Gazebo Harmonic** kurulu olmalı.
-- ESP32, iki ESC/motor ve HX711'li iki load cell düzeneği hazır olmalı.
-
-Terminalde:
+- **Ubuntu 24.04 LTS** kullanın. Önce [ROS 2 Jazzy Desktop kurulumu](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html) yapın.
+- Ardından Gazebo Harmonic entegrasyonu, CubeSat modeli, derleme ve ESP32 haberleşmesi için şu ek paketleri **tek seferde** kurun:
 
 ```bash
 sudo apt update
-sudo apt install -y ros-jazzy-ros-gz ros-jazzy-xacro python3-colcon-common-extensions python3-serial
+sudo apt install -y \
+  ros-jazzy-ros-gz \
+  ros-jazzy-xacro \
+  ros-jazzy-robot-state-publisher \
+  python3-colcon-common-extensions \
+  python3-rosdep \
+  python3-serial \
+  python3-numpy
 ```
+
+ESP32, iki ESC/motor ve HX711'li iki load cell düzeneği de hazır olmalı. Aynı ESP32 kullanılıyorsa Arduino kodunu tekrar yüklemek gerekmez.
+
 
 ## 2. Projeyi aç ve derle
 
@@ -23,6 +31,12 @@ cd ~
 tar -xzf ~/Downloads/cubesat_ws_FINAL.tar.gz
 cd ~/cubesat_ws
 source /opt/ros/jazzy/setup.bash
+
+# rosdep ilk defa kuruluyorsa ("already initialized" derse bu satırı atla):
+sudo rosdep init
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
+
 colcon build --symlink-install
 source install/setup.bash
 ```
@@ -30,7 +44,8 @@ source install/setup.bash
 ## 3. Arduino / ESP32
 
 - Aynı, daha önce programlanmış ESP32 kullanılıyorsa kodu tekrar yüklemek gerekmez.
-- Farklı ESP32 kullanılacaksa repodaki ino dosyasını **Arduino IDE** ile aç. ESP32 kart desteğini ve **ESP32Servo** ile **HX711** kütüphanelerini kurup kodu yükle.
+- Farklı ESP32 kullanılacaksa `arduino/CubeSat_ESP32_FINAL/CubeSat_ESP32_FINAL.ino` dosyasını **Arduino IDE** ile aç. ESP32 kart desteğini ve **ESP32Servo** ile **HX711** kütüphanelerini kurup kodu yükle.
+- Bağlantılar: **ESC1 GPIO25**, **ESC2 GPIO26**; **HX711-1 DT21/SCK19**, **HX711-2 DT35/SCK32**.
 - USB ile ESP32'yi bağla; **Arduino Serial Monitor kapalı** olsun. ESC güç bağlantılarını güvenli biçimde yap.
 - Portu öğren:
 
@@ -98,7 +113,7 @@ source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 
 python3 ~/cubesat_ws/tools/final_hw_attitude_control.py \
-  --target 45 \ 
+  --target 45 \
   --port /dev/ttyUSB0 \
   --model cubesat \
   --z 0.8 \
